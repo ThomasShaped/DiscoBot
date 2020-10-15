@@ -66,18 +66,32 @@ class MessageHandler {
 
     // Fetch the member and necessary roles.
     const Member = await Message.guild.members.fetch(Message.author.id);
+    const restrictedRole = await Message.guild.roles.cache.find(role => role.name === `Restricted`);
     const under18Role = await Message.guild.roles.cache.find(role => role.name === `Under 18`);
     const over18Role = await Message.guild.roles.cache.find(role => role.name === `18+`);
+    const staffRole = await Message.guild.roles.cache.find(role => role.name === `Staff`);
+    const violationsChannel = await Message.guild.channels.cache.find(channel => channel.name === `violations`);
 
     // Don't do anything if there aren't any matches
     if (!matches) return;
 
-    // TODO: Don't do anything if the user already has an age role
-
     // If age is detected and the matched age is less than 13
     // mute the member and alert staff.
     if (matches.groups.age && matches.groups.age < 13) {
-      // TODO: Restrict user here.
+      Member.roles.add(restrictedRole);
+
+      const embed = new Discord.MessageEmbed();
+
+      embed.setColor(0xE67E21);
+      embed.setTitle(`${Member.displayName} has been auto restricted`);
+      embed.setAuthor(Member.displayName, Member.user.avatarURL());
+      embed.setDescription(`Underage`);
+
+      const embedDate = new Date(Date.now());
+      embed.setTimestamp(embedDate.toISOString());
+
+      violationsChannel.send(`:robot: ${staffRole} ${Member} has been auto restricted.`, embed);
+      return;
     }
 
     // If age is detected and matched age is less than 18
